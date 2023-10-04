@@ -1,6 +1,6 @@
 # lattice
 
-Sound Generation via Physics-Inspired Cellular Automata"
+Sound Generation via Physics-Inspired Cellular Automata
 
 Simulating the intricate real-world physics of pressure wave propagation is challenging. For insights, consider:
 - AngeTheGreat's demonstration on real-time physics-based audio: [Real-time Trumpet Simulation [C++/Vulkan]](https://youtu.be/rGNUHigqUBM?t=119).
