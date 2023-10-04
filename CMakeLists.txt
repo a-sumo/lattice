@@ -23,6 +23,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Xclang -fopenmp")
 set(SOURCES
     src/main.cpp
     src/automaton_2d.cpp
+    src/webgpu-utils.cpp
     src/audio_handler.cpp
 )
 
