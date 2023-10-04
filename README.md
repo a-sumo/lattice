@@ -8,11 +8,7 @@ Simulating the intricate real-world physics of pressure wave propagation is chal
 
 Addressing this challenge requires rethinking our approach. Starting with hardware (CPUs and GPUs), we must identify which physics simulations are most computationally efficient. Cellular automata emerge as a promising solution. Defined on a grid and driven by straightforward rules, they yield complex dynamics. Their structure allows rapid computation on contemporary hardware, making them suitable for simulating real-world physics, as seen in [Lattice gas automaton](https://en.wikipedia.org/wiki/Lattice_gas_automaton).
 
-
-
-
-
-## Overview
+## Technical Overview
 
 The program initializes a 2D automaton of a specified width and height, seeds it with initial data, and then computes its state in a loop. The state of the automaton is then used to stream audio using a callback mechanism.
 
@@ -20,7 +16,7 @@ The program initializes a 2D automaton of a specified width and height, seeds it
 
 1. **Initialization**:
    - Initialize a 2D automaton grid.
-   - Seed the automaton with a pulse of data.
+   - Seed the automaton with a pulse pattern.
 
 2. **Main Loop**:
    - In parallel:
@@ -33,7 +29,14 @@ The program initializes a 2D automaton of a specified width and height, seeds it
    - An audio callback function reads the current state of the automaton.
    - The callback calculates an average from a small domain of the state.
    - This average is then used to fill an audio buffer which is played back in real-time.
+## Code Structure
 
+- `main.cpp`: Contains the main program logic, including the automaton initialization, the main loop, and the audio streaming setup.
+- `audio_handler.cpp`: Contains the audio callback function which reads the automaton's state and fills the audio buffer.
+
+<details>
+   <summary>Further details</summary>
+   
 ### Double Buffering
 
 To avoid race conditions between the audio callback (which reads the automaton's state) and the main loop (which updates it), a double buffering approach is used. There are two state buffers:
@@ -42,12 +45,7 @@ To avoid race conditions between the audio callback (which reads the automaton's
 
 After each iteration of the main loop, these buffers are swapped. This ensures that the audio callback always has a consistent state to read from, even while the next state is being computed.
 
-## Code Structure
-
-- `main.cpp`: Contains the main program logic, including the automaton initialization, the main loop, and the audio streaming setup.
-- `audio_handler.cpp`: Contains the audio callback function which reads the automaton's state and fills the audio buffer.
-
-## Diagram
+### Diagram
 
 ```mermaid
 graph TD;
@@ -66,33 +64,4 @@ graph TD;
     K --> L[Play Audio];
     L --> C;
 ```
-
-## GRAPHICS LIBRARY GOALS & REQUIREMENTS
-
-GOAL:
-- Develop a high-performance graphics library that facilitates efficient
-  visualization of a 2D automaton and its subsequent states in real-time.
-
-CORE REQUIREMENTS:
-
-1. Cross-platform: The library should work seamlessly across major platforms,
-   especially macOS M1.
-
-2. High Performance: Capable of rendering large datasets in real-time with minimal
-   latency.
-
-3. Thread-safe: Able to work concurrently with other threads, especially with audio
-   and automaton computation threads.
-
-4. Minimal Dependencies: Reduce dependency on extensive frameworks or libraries,
-   especially GUI-related ones.
-
-5. Modular: Should be easy to integrate with other parts of the system, like audio
-   processing or automaton computation.
-
-6. User-friendly API: The API should abstract away the complexities of Vulkan and
-   provide an intuitive interface for common tasks.
-
-7. Buffering: Integrate a mechanism to buffer several computations and update the 
-   visualization at a fixed rate, e.g., 60Hz.
-
+</detail>
