@@ -1,6 +1,16 @@
 # lattice
 
-This project is an experimental exploration of mapping a 2D automaton's state to audio in real-time.
+Sound Generation via Physics-Inspired Cellular Automata"
+
+Simulating the intricate real-world physics of pressure wave propagation is challenging. For insights, consider:
+- AngeTheGreat's demonstration on real-time physics-based audio: [Real-time Trumpet Simulation [C++/Vulkan]](https://youtu.be/rGNUHigqUBM?t=119).
+- Doug James discussing the complexities of physics-based audio: [Doug James: Computer-generated sound catches its graphical sibling](https://youtu.be/10zK-3SjTeY?t=479).
+
+Addressing this challenge requires rethinking our approach. Starting with hardware (CPUs and GPUs), we must identify which physics simulations are most computationally efficient. Cellular automata emerge as a promising solution. Defined on a grid and driven by straightforward rules, they yield complex dynamics. Their structure allows rapid computation on contemporary hardware, making them suitable for simulating real-world physics, as seen in [Lattice gas automaton](https://en.wikipedia.org/wiki/Lattice_gas_automaton).
+
+
+
+
 
 ## Overview
 
