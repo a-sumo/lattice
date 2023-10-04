@@ -91,8 +91,40 @@ int main(int, char **)
             std::cout << " (" << message << ")";
         std::cout << std::endl;
     };
-    
+
     wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr /* pUserData */);
+
+    // Get the main and only command queue used to send instructions to the GPU
+    WGPUQueue queue = wgpuDeviceGetQueue(device);
+
+#ifdef WEBGPU_BACKEND_DAWN
+    // Add a callback to monitor the moment queued work winished
+    auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void * /* pUserData */)
+    {
+        std::cout << "Queued work finished with status: " << status << std::endl;
+    };
+    wgpuQueueOnSubmittedWorkDone(queue, 0 /* non standard argument for Dawn */, onQueueWorkDone, nullptr /* pUserData */);
+#endif // WEBGPU_BACKEND_DAWN
+
+    // We create a command encoder to be able to create command buffers
+    WGPUCommandEncoderDescriptor encoderDesc = {};
+    encoderDesc.nextInChain = nullptr;
+    encoderDesc.label = "My command encoder";
+    WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+
+    // Encode some mock commands
+    wgpuCommandEncoderInsertDebugMarker(encoder, "Do one thing");
+    wgpuCommandEncoderInsertDebugMarker(encoder, "Do another thing");
+
+    // Encode commands into a command buffer
+    WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
+    cmdBufferDescriptor.nextInChain = nullptr;
+    cmdBufferDescriptor.label = "Command buffer";
+    WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+
+    // Finally submit the command queue
+    std::cout << "Submitting command..." << std::endl;
+    wgpuQueueSubmit(queue, 1, &command);
 
     uint8_t **current_state = (uint8_t **)malloc(HEIGHT * sizeof(uint8_t *));
     uint8_t **next_state = (uint8_t **)malloc(HEIGHT * sizeof(uint8_t *));
