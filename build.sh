@@ -1,7 +1,5 @@
 #!/bin/bash
 
-<<<<<<< Updated upstream
-=======
 # Check for backend argument, default to WGPU if none provided
 BACKEND=${1:-DAWN}
 
@@ -13,14 +11,10 @@ if [ -d "build" ]; then
 fi
 
 # Run CMake commands
-echo "Running CMake..."
-cmake . -B build
+echo "Running CMake with backend: $BACKEND..."
+cmake . -B build -DWEBGPU_BACKEND=$BACKEND
 cmake --build build
 
-# Launch the binary
+# Launch the binary with backtrace enabled
 echo "Launching the application..."
-<<<<<<< Updated upstream
 ./build/lattice
-=======
-RUST_BACKTRACE=full ./build/lattice 
->>>>>>> Stashed changes

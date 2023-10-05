@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.1...3.25)
 project(Lattice VERSION 0.1.0 LANGUAGES CXX C)
 
+include(FetchContent)
+
+FetchContent_Declare(
+  webgpu
+  GIT_REPOSITORY https://github.com/eliemichel/WebGPU-distribution
+  GIT_TAG        main
+)
+FetchContent_MakeAvailable(webgpu)
+
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -24,16 +34,12 @@ set(SOURCES
     src/main.cpp
     src/automaton_2d.cpp
     src/webgpu-utils.cpp
-<<<<<<< Updated upstream
-    src/audio_handler.cpp
-=======
     src/Application.cpp
     src/ResourceManager.cpp
     src/implementations.cpp
     src/simulationworker.cpp
     audio/AudioInterface.cpp
     audio/AudioThread.cpp
->>>>>>> Stashed changes
 )
 
 # OpenMP paths
@@ -41,17 +47,14 @@ set(OPENMP_LIB_PATH "/opt/homebrew/opt/libomp/lib/libomp.dylib")
 set(OPENMP_INCLUDE_PATH "/opt/homebrew/opt/libomp/include")
 
 # Create executable
-<<<<<<< Updated upstream
-add_executable(lattice ${SOURCES})
-=======
 add_executable(lattice 
 include/Application.h
 include/ResourceManager.h
-include/simulationworker.h
 ${SOURCES})
->>>>>>> Stashed changes
 
-target_include_directories(lattice PRIVATE 
+# we add "." here to make sure that we can include "glm/glm.hpp" instead of "glm.hpp"
+target_include_directories(lattice PRIVATE
+    .
     ${RTAUDIO_INCLUDE_DIR} 
     ${OPENMP_INCLUDE_PATH} 
     audio
@@ -63,9 +66,25 @@ target_include_directories(lattice PRIVATE
 target_link_libraries(lattice PRIVATE 
     ${RTAUDIO_LIBRARY} 
     ${OPENMP_LIB_PATH}
+    # glfw
     glfw3webgpu
     webgpu
+    imgui
 )
+if(DEV_MODE)
+	# In dev mode, we load resources from the source tree, so that when we
+	# dynamically edit resources (like shaders), these are correctly
+	# versionned.
+	target_compile_definitions(lattice PRIVATE
+		RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources"
+	)
+else()
+	# In release mode, we just load resources relatively to wherever the
+	# executable is launched from, so that the binary is portable
+	target_compile_definitions(lattice PRIVATE
+		RESOURCE_DIR="./resources"
+	)
+endif()
 
 # Compiler settings
 set_target_properties(lattice PROPERTIES COMPILE_WARNINGS_AS_ERROR ON)
@@ -83,9 +102,10 @@ if(XCODE)
 endif()
 
 # Adding necessary subdirectories
-add_subdirectory(glfw)
+# add_subdirectory(glfw)
 add_subdirectory(webgpu)
 add_subdirectory(glfw3webgpu)
+add_subdirectory(imgui)
 
 # If using the wgpu-native distribution with precompiled binaries
 target_copy_webgpu_binaries(lattice)
