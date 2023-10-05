@@ -12,56 +12,60 @@ Addressing this challenge requires rethinking our approach. Starting with hardwa
 
 The program initializes a 2D automaton of a specified width and height, seeds it with initial data, and then computes its state in a loop. The state of the automaton is then used to stream audio using a callback mechanism.
 
-### Workflow
-
-1. **Initialization**:
-   - Initialize a 2D automaton grid.
-   - Seed the automaton with a pulse pattern.
-
-2. **Main Loop**:
-   - In parallel:
-     - Compute the next state of the automaton.
-     - Apply boundary conditions.
-     - Add any sustained excitations.
-   - After computation, swap the read and write buffers.
-
-3. **Audio Streaming**:
-   - An audio callback function reads the current state of the automaton.
-   - The callback calculates an average from a small domain of the state.
-   - This average is then used to fill an audio buffer which is played back in real-time.
-## Code Structure
-
-- `main.cpp`: Contains the main program logic, including the automaton initialization, the main loop, and the audio streaming setup.
-- `audio_handler.cpp`: Contains the audio callback function which reads the automaton's state and fills the audio buffer.
-
-<details>
-   <summary>Further details</summary>
-   
-### Double Buffering
-
-To avoid race conditions between the audio callback (which reads the automaton's state) and the main loop (which updates it), a double buffering approach is used. There are two state buffers:
-- `readState`: The buffer being read by the audio callback.
-- `writeState`: The buffer into which the automaton's next state is written.
-
-After each iteration of the main loop, these buffers are swapped. This ensures that the audio callback always has a consistent state to read from, even while the next state is being computed.
-
-### Diagram
+### High-Level Workflow
 
 ```mermaid
 graph TD;
-    A[Initialize 2D Automaton] --> B[Seed Automaton];
-    B --> C[Start Main Loop];
-    C --> D{Parallel Sections};
-    D --> E[Compute Next State];
-    D --> F[Apply Boundary Conditions];
-    D --> G[Add Sustained Excitation];
-    E --> H[Swap Buffers];
-    F --> H;
-    G --> H;
-    H --> I[Audio Callback];
-    I --> J[Compute Average];
-    J --> K[Fill Audio Buffer];
-    K --> L[Play Audio];
-    L --> C;
+    A[Application Initialization] --> B[2D Automaton Setup];
+    B --> C[Seed Automaton with Pulse Pattern];
+    C --> D[Main Loop Execution];
+    D --> E[Audio Streaming];
+    E --> F[Real-time Playback];
 ```
-</detail>
+### Detailed Workflow
+
+<details>
+
+<summary>Diagram</summary>
+
+```mermaid
+graph TD;
+    A1[Initialize Application] --> B1[Set up GLFW and Audio Handlers];
+    B1 --> C1[Initialize 2D Automaton Grid];
+    C1 --> D1[Seed with Pulse Pattern];
+    D1 --> E1[Enter Main Loop];
+    E1 --> F1[Compute Next State in Parallel];
+    F1 --> G1[Swap Read/Write Buffers];
+    G1 --> H1[Callback to Stream Audio];
+    H1 --> I1[Fill Audio Buffer from Automaton State];
+    I1 --> J1[Playback Audio];
+    J1 --> E1;
+```
+</details>
+
+## Code Structure
+
+The project's directory structure and main components are as follows:
+
+- **Root Directory**:
+    - `CMakeLists.txt`: Main CMake configuration file.
+    - `build.sh`: Script for building the project.
+    - `README.md`: Overview and instructions (this file).
+
+- **Audio Handling**:
+    - Located inside the `audio` directory.
+    - Contains classes and functions related to processing and streaming audio.
+
+- **Automaton Computation**:
+    - Located inside the `src` directory.
+    - Files `automaton_2d.cpp` and `simulationworker.cpp` handle the simulation logic.
+
+- **Resources and External Libraries**:
+    - `resources`: Contains asset files used in the simulation.
+    - `external`: External header files and libraries.
+    - `webgpu`: WebGPU related files and configuration.
+
+## Building and Running
+
+Please refer to the provided `build.sh` script for building instructions. The project is currently optimized for macOS but I'm planning on making it fully cross-platform.
+"""

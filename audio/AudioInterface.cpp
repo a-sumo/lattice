@@ -1,25 +1,26 @@
-#include "audio_handler.h"
-#include "automaton_2d.h"
+#include "AudioInterface.h"
 #include <mutex>
 
-#define WIDTH 256
-#define HEIGHT 256
+// Constants
+const unsigned int WIDTH = 256;
+const unsigned int HEIGHT = 256;
 
-// Double buffering
-extern uint8_t **readState;  // Used by audio_callback
+// External references
+extern uint8_t **readState; // Used by audio_callback
+extern std::mutex bufferSwapMutex;
+std::mutex *pBufferSwapMutex = nullptr;
 
 // Global or static variables to keep track of the state
 static float prev_avg = 0.0f;
 static float next_avg = 0.0f;
 static unsigned int frames_since_last_update = 0;
-extern std::mutex bufferSwapMutex;
 
 int audio_callback(void *outputBuffer, [[maybe_unused]] void *inputBuffer, unsigned int nBufferFrames,
                    [[maybe_unused]] double streamTime, [[maybe_unused]] RtAudioStreamStatus status, [[maybe_unused]] void *userData)
 {
     uint8_t **current_state;
     {
-        std::lock_guard<std::mutex> lock(bufferSwapMutex);
+        std::lock_guard<std::mutex> lock(*pBufferSwapMutex);
         current_state = readState;
     }
 
@@ -52,4 +53,15 @@ int audio_callback(void *outputBuffer, [[maybe_unused]] void *inputBuffer, unsig
     }
 
     return 0;
+}
+
+void setupAudio(uint8_t **readBuffer, std::mutex *bufferMutexPtr)
+{
+    readState = readBuffer;
+    pBufferSwapMutex = bufferMutexPtr;
+}
+
+void cleanupAudio()
+{
+    // Any cleanup related to the audio (if needed)
 }
