@@ -49,7 +49,7 @@ void SimulationWorker::compute()
         if (step % 1000 == 0)
         {
             char filename[50];
-            sprintf(filename, "state_%zu.png", step);
+            sprintf(filename, "output/state_%zu.png", step);
             uint8_t *flat_data = new uint8_t[WIDTH * HEIGHT];
             for (size_t i = 0; i < HEIGHT; i++)
             {
