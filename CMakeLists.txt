@@ -37,7 +37,7 @@ set(SOURCES
     src/Application.cpp
     src/ResourceManager.cpp
     src/implementations.cpp
-    src/simulationworker.cpp
+    src/SimulationWorker.cpp
     audio/AudioInterface.cpp
     audio/AudioThread.cpp
 )
@@ -49,6 +49,8 @@ set(OPENMP_INCLUDE_PATH "/opt/homebrew/opt/libomp/include")
 # Create executable
 add_executable(lattice 
 include/BufferManager.h
+include/stb_image.h
+include/stb_image_write.h
 ${SOURCES})
 
 # we add "." here to make sure that we can include "glm/glm.hpp" instead of "glm.hpp"
@@ -58,7 +60,6 @@ target_include_directories(lattice PRIVATE
     ${OPENMP_INCLUDE_PATH} 
     audio
     include
-    external
 )
 
 # Linking libraries

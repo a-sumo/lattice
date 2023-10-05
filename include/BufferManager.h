@@ -2,6 +2,7 @@
 #define BUFFERMANAGER_H
 
 #include <mutex>
+#include <iostream>
 
 class BufferManager
 {
@@ -35,14 +36,20 @@ public:
         delete[] writeState;
     }
 
-    // Remove the BufferManager:: prefix here
     uint8_t **getReadState() const
     {
-        std::lock_guard<std::mutex> lock(bufferSwapMutex);
-        return readState;
+        if (bufferSwapMutex.try_lock())
+        {
+            std::lock_guard<std::mutex> lock(bufferSwapMutex, std::adopt_lock);
+            return readState;
+        }
+        else
+        {
+            return nullptr;
+        }
     }
 
-    uint8_t **getWriteState() const 
+    uint8_t **getWriteState() const
     {
         std::lock_guard<std::mutex> lock(bufferSwapMutex);
         return writeState;
@@ -59,7 +66,6 @@ public:
         return &bufferSwapMutex;
     }
 
-    // Delete copy constructor and copy assignment operator
     BufferManager(const BufferManager &) = delete;
     BufferManager &operator=(const BufferManager &) = delete;
 };

@@ -1,67 +1,69 @@
 #include "AudioInterface.h"
-#include "simulationworker.h"
+#include "SimulationWorker.h"
 #include "BufferManager.h"
 #include <mutex>
 
-// Constants
 const unsigned int WIDTH = 256;
 const unsigned int HEIGHT = 256;
 
-extern SimulationWorker simWorker;  // Assuming simWorker is globally accessible 
-
-// Use the mutex from simWorker directly
+extern SimulationWorker simWorker; 
 std::mutex *pBufferSwapMutex = nullptr;
 
-// Global or static variables to keep track of the state
 static float prev_avg = 0.0f;
 static float next_avg = 0.0f;
 static unsigned int frames_since_last_update = 0;
 
-int audio_callback(void *outputBuffer, [[maybe_unused]] void *inputBuffer, unsigned int nBufferFrames,
-                   [[maybe_unused]] double streamTime, [[maybe_unused]] RtAudioStreamStatus status, [[maybe_unused]] void *userData)
+int audio_callback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
+                   double streamTime, RtAudioStreamStatus status, void *userData)
 {
     uint8_t **current_state;
     {
         std::lock_guard<std::mutex> lock(*pBufferSwapMutex);
-        current_state = simWorker.getReadState();  // Use the simWorker to get the readState
+        current_state = simWorker.getReadState();
     }
-    // Get the average audio data from a small domain.
+
     float *buffer = (float *)outputBuffer;
-    unsigned int domainSize = 10; // Example domain size
+    unsigned int domainSize = 10;
+
+    if (!current_state) {
+        for (unsigned int i = 0; i < nBufferFrames; ++i) {
+            buffer[i] = 0.0f;
+        }
+        return 0;
+    }
+
     float sum = 0.0f;
-    for (unsigned int i = HEIGHT / 2 - domainSize / 2; i < HEIGHT / 2 + domainSize / 2; ++i)
-    {
-        for (unsigned int j = WIDTH / 2 - domainSize / 2; j < WIDTH / 2 + domainSize / 2; ++j)
-        {
+    for (unsigned int i = HEIGHT / 2 - domainSize / 2; i < HEIGHT / 2 + domainSize / 2; ++i) {
+        for (unsigned int j = WIDTH / 2 - domainSize / 2; j < WIDTH / 2 + domainSize / 2; ++j) {
             sum += current_state[i][j];
         }
     }
-    next_avg = sum / (domainSize * domainSize) / 255.0f - 0.5f; // Normalize to [-0.5, 0.5]
+    next_avg = sum / (domainSize * domainSize) / 255.0f - 0.5f;
 
-    // Interpolate between prev_avg and next_avg
-    for (unsigned int i = 0; i < nBufferFrames; ++i)
-    {
+    for (unsigned int i = 0; i < nBufferFrames; ++i) {
         float alpha = (float)frames_since_last_update / nBufferFrames;
         buffer[i] = (1.0f - alpha) * prev_avg + alpha * next_avg;
         frames_since_last_update++;
     }
 
-    // Once we've filled a full buffer since the last update, update the previous average
-    if (frames_since_last_update >= nBufferFrames)
-    {
+    if (frames_since_last_update >= nBufferFrames) {
         prev_avg = next_avg;
         frames_since_last_update = 0;
+    }
+
+    if (frames_since_last_update % 44100 == 0) {
+        std::cout << "Audio state: prev_avg = " << prev_avg << ", next_avg = " << next_avg << std::endl;
+        std::flush(std::cout);
     }
 
     return 0;
 }
 
-void setupAudio() {
-    // Initialize pBufferSwapMutex during audio setup
+void setupAudio()
+{
     pBufferSwapMutex = simWorker.getBufferSwapMutex();
 }
 
 void cleanupAudio()
 {
-    // Any cleanup related to the audio (if needed)
 }

@@ -10,6 +10,8 @@ std::atomic<bool> isAudioThreadRunning = true;
 
 void runAudioThread()
 {
+    std::cout << "Audio thread started." << std::endl;
+    std::flush(std::cout);
     RtAudio dac;
     try
     {

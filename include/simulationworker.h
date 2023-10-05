@@ -13,7 +13,6 @@ public:
     SimulationWorker();
     ~SimulationWorker();
     void compute();
-    void waitForCompletion();
     std::mutex* getBufferSwapMutex();
     uint8_t** getReadState() const;
     uint8_t** getWriteState() const;

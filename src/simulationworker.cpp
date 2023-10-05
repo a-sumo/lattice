@@ -1,10 +1,12 @@
-#include "simulationworker.h"
+#include "SimulationWorker.h"
 #include <iostream>
 #include <cstring>
+#include "stb_image_write.h"
 
 SimulationWorker::SimulationWorker() : bufferManager(WIDTH, HEIGHT), isDone(false)
 {
     uint8_t **currentState = bufferManager.getReadState();
+    if(!currentState) return;
     for (size_t i = HEIGHT / 2 - 5; i < HEIGHT / 2 + 5; i++)
     {
         for (size_t j = WIDTH / 2 - 5; j < WIDTH / 2 + 5; j++)
@@ -17,34 +19,65 @@ SimulationWorker::SimulationWorker() : bufferManager(WIDTH, HEIGHT), isDone(fals
 void SimulationWorker::compute()
 {
     uint8_t **current_state = bufferManager.getReadState();
-    uint8_t **next_state = bufferManager.getWriteState(); 
-    size_t step = 0;  // Initialize timestep
+    uint8_t **next_state = bufferManager.getWriteState();
+    if(!current_state || !next_state) {
+        std::cerr << "Failed to get simulation buffers." << std::endl;
+        return;
+    }
 
-    while (!shouldExit) {  // Check the flag to exit the loop
-        // Note: You might want to add an exit condition here based on some variable or flag.
-        
+    size_t step = 0;
+    size_t debugMaxSteps = 10000;
+    while (!shouldExit && step < debugMaxSteps)
+    {
         compute_next_state(current_state, next_state, WIDTH, HEIGHT);
         apply_boundary_conditions(next_state, WIDTH, HEIGHT);
         add_sustained_excitation(next_state, WIDTH, HEIGHT, step);
 
-        // Copy the newly computed state to the writeState buffer
-        for (size_t i = 0; i < HEIGHT; i++) {
-            memcpy(next_state[i], current_state[i], WIDTH * sizeof(uint8_t));
+        bufferManager.swapBuffers();
+
+        // Update the state pointers after the swap
+        current_state = bufferManager.getReadState();
+        next_state = bufferManager.getWriteState();
+
+        step++;
+
+        if (step % 100 == 0)
+        {
+            std::cout << "Simulation step: " << step << std::endl;
         }
 
-        // Swap buffers after computation
-        bufferManager.swapBuffers();
-        step++;  // Increment timestep
+        if (step % 1000 == 0)
+        {
+            char filename[50];
+            sprintf(filename, "state_%zu.png", step);
+            uint8_t *flat_data = new uint8_t[WIDTH * HEIGHT];
+            for (size_t i = 0; i < HEIGHT; i++)
+            {
+                for (size_t j = 0; j < WIDTH; j++)
+                {
+                    flat_data[i * WIDTH + j] = current_state[i][j];
+                }
+            }
+            stbi_write_png(filename, WIDTH, HEIGHT, 1, flat_data, WIDTH);
+            delete[] flat_data;
+
+            // Logging the audio buffer for debugging
+            float sum = 0.0f;
+            for (size_t i = 0; i < HEIGHT; i++)
+            {
+                for (size_t j = 0; j < WIDTH; j++)
+                {
+                    sum += current_state[i][j];
+                }
+            }
+            float avg = sum / (WIDTH * HEIGHT);
+            std::cout << "Average audio buffer value at step " << step << ": " << avg << std::endl;
+        }
     }
+
+    std::cout << "Simulation thread exited the loop after " << step << " steps. ShouldExit: " << shouldExit << std::endl;
 }
 
-void SimulationWorker::waitForCompletion()
-{
-    std::unique_lock<std::mutex> lock(cv_mutex);
-    while (!isDone)
-        cv.wait(lock);
-    workerThread.join();
-}
 
 uint8_t **SimulationWorker::getReadState() const
 {
@@ -67,12 +100,4 @@ SimulationWorker::~SimulationWorker()
     {
         workerThread.join();
     }
-    // Cleanup code if any. For example:
-    for (size_t i = 0; i < HEIGHT; i++)
-    {
-        delete[] current_state[i];
-        delete[] next_state[i];
-    }
-    delete[] current_state;
-    delete[] next_state;
 }

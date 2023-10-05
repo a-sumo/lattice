@@ -2,7 +2,7 @@
 #include "automaton_2d.h"
 #include "audio/AudioThread.h"
 #include "audio/AudioInterface.h"
-#include "simulationworker.h"
+#include "SimulationWorker.h"
 #include <iostream>
 #include <thread>
 #include <mutex>
@@ -33,8 +33,11 @@ int main(int, char **)
 
 	std::thread simulationThread([&]()
 	{
+		std::cout << "Simulation thread started." << std::endl;
+		std::flush(std::cout);
 		while (app.isRunning()) {
 			simWorker.compute();
+			
 		}
 		simWorker.requestExit();  // Request simulation worker to exit its loop
 	});
@@ -46,7 +49,6 @@ int main(int, char **)
         double currentTime = glfwGetTime();
         if (currentTime - lastTime >= targetFrameTime)
         {
-            std::cout << "Frame time: " << currentTime - lastTime << std::endl;
             app.onFrame();
             glfwPollEvents();
             lastTime = currentTime;

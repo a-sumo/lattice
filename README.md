@@ -58,7 +58,7 @@ The project's directory structure and main components are as follows:
 
 - **Automaton Computation**:
     - Located inside the `src` directory.
-    - Files `automaton_2d.cpp` and `simulationworker.cpp` handle the simulation logic.
+    - Files `automaton_2d.cpp` and `SimulationWorker.cpp` handle the simulation logic.
 
 - **Resources and External Libraries**:
     - `resources`: Contains asset files used in the simulation.
