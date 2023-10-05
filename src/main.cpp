@@ -1,22 +1,28 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "Application.h"
 #include "automaton_2d.h"
-#include "audio_handler.h"
-#include "stb_image_write.h"
+#include "audio/AudioThread.h"
+#include "audio/AudioInterface.h"
+#include "simulationworker.h"
 #include <iostream>
+#include <thread>
 #include <mutex>
-#include "webgpu-utils.h"
 #include <GLFW/glfw3.h>
+<<<<<<< Updated upstream
 #include <webgpu/webgpu.h>
 #include <glfw3webgpu.h>
 #include <cassert>
 #include <vector>
+=======
 
-#define WIDTH 256
-#define HEIGHT 256
-#define STEPS 44100
+const size_t WIDTH = 256;
+const size_t HEIGHT = 256;
+const size_t STEPS = 44100;
+>>>>>>> Stashed changes
 
+const double targetFrameTime = 1.0 / 60.0; // 60 FPS
+double lastTime = glfwGetTime();
+
+<<<<<<< Updated upstream
 #define UNUSED(x) (void)x;
 
 // Double buffering
@@ -332,3 +338,35 @@ int main(int, char **)
 
 // 	return 0;
 // }
+=======
+int main(int, char **)
+{
+	Application app;
+	if (!app.onInit())
+		return 1;
+	SimulationWorker simWorker;
+	// Seed the simulation
+	setupAudio(simWorker.getReadState(), simWorker.getBufferSwapMutex());
+	std::thread audioThread(runAudioThread);
+
+	while (app.isRunning())
+	{
+		simWorker.compute();
+		simWorker.waitForCompletion();
+
+		double currentTime = glfwGetTime();
+		if (currentTime - lastTime >= targetFrameTime)
+		{
+			app.onFrame();
+			glfwPollEvents();
+			lastTime = currentTime;
+		}
+	}
+
+	audioThread.join();
+	cleanupAudio();
+
+	app.onFinish();
+	return 0;
+}
+>>>>>>> Stashed changes

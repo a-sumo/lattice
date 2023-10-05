@@ -24,7 +24,16 @@ set(SOURCES
     src/main.cpp
     src/automaton_2d.cpp
     src/webgpu-utils.cpp
+<<<<<<< Updated upstream
     src/audio_handler.cpp
+=======
+    src/Application.cpp
+    src/ResourceManager.cpp
+    src/implementations.cpp
+    src/simulationworker.cpp
+    audio/AudioInterface.cpp
+    audio/AudioThread.cpp
+>>>>>>> Stashed changes
 )
 
 # OpenMP paths
@@ -32,11 +41,20 @@ set(OPENMP_LIB_PATH "/opt/homebrew/opt/libomp/lib/libomp.dylib")
 set(OPENMP_INCLUDE_PATH "/opt/homebrew/opt/libomp/include")
 
 # Create executable
+<<<<<<< Updated upstream
 add_executable(lattice ${SOURCES})
+=======
+add_executable(lattice 
+include/Application.h
+include/ResourceManager.h
+include/simulationworker.h
+${SOURCES})
+>>>>>>> Stashed changes
 
 target_include_directories(lattice PRIVATE 
     ${RTAUDIO_INCLUDE_DIR} 
     ${OPENMP_INCLUDE_PATH} 
+    audio
     include
     external
 )
