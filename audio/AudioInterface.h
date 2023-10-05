@@ -10,7 +10,7 @@ int audio_callback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFr
                    double streamTime, RtAudioStreamStatus status, void *userData);
 
 // Setup and cleanup functions
-void setupAudio(uint8_t **readBuffer, std::mutex *bufferMutex);
+void setupAudio();
 void cleanupAudio();
 
 #endif

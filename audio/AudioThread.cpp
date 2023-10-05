@@ -4,13 +4,19 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <atomic>
 
-void runAudioThread() {
+std::atomic<bool> isAudioThreadRunning = true; 
+
+void runAudioThread()
+{
     RtAudio dac;
-    try {
-        if (dac.getDeviceCount() < 1) {
+    try
+    {
+        if (dac.getDeviceCount() < 1)
+        {
             std::cerr << "\nNo audio devices found!\n";
-            return;  // Exit the thread gracefully
+            return; // Exit the thread gracefully
         }
 
         RtAudio::StreamParameters parameters;
@@ -18,19 +24,21 @@ void runAudioThread() {
         parameters.nChannels = 1;
         unsigned int sampleRate = 44100;
         unsigned int bufferFrames = 256; // 256 sample frames
-
         dac.openStream(&parameters, NULL, RTAUDIO_FLOAT32, sampleRate, &bufferFrames, &audio_callback, nullptr);
         dac.startStream();
 
-        while (dac.isStreamRunning()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Adjust this value if necessary
+        while (dac.isStreamRunning() && isAudioThreadRunning)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
         dac.stopStream();
-        if (dac.isStreamOpen()) {
+        if (dac.isStreamOpen())
+        {
             dac.closeStream();
         }
-    }     catch (RtAudioErrorType &e)
+    }
+    catch (RtAudioErrorType &e)
     {
         std::string errorMessage;
         switch (e)

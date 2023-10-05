@@ -11,55 +11,56 @@
 #include <glfw3webgpu.h>
 #include <cassert>
 #include <vector>
-#include "Application.h"
 using namespace wgpu;
 
-const size_t WIDTH = 256;
-const size_t HEIGHT = 256;
-const size_t STEPS = 44100;
-
-
+// const size_t WIDTH = 256;
+// const size_t HEIGHT = 256;
+// const size_t STEPS = 44100;
 const double targetFrameTime = 1.0 / 60.0; // 60 FPS
 double lastTime = glfwGetTime();
 
 #define UNUSED(x) (void)x;
 
-// Double buffering
-uint8_t **currentStateBuffer1;
-uint8_t **currentStateBuffer2;
-uint8_t **readState = nullptr;  // Used by audio_callback
-uint8_t **writeState = nullptr; // Updated by automaton
-
-std::mutex bufferSwapMutex; // Used to protect buffer swap operations
+SimulationWorker simWorker;
 
 int main(int, char **)
 {
-	Application app;
-	if (!app.onInit())
-		return 1;
-	SimulationWorker simWorker;
-	// Seed the simulation
-	setupAudio(simWorker.getReadState(), simWorker.getBufferSwapMutex());
+    Application app;
+    if (!app.onInit())
+        return 1;
+
+    setupAudio();  // We removed the parameters since we're now using the global simWorker
+
+	std::thread simulationThread([&]()
+	{
+		while (app.isRunning()) {
+			simWorker.compute();
+		}
+		simWorker.requestExit();  // Request simulation worker to exit its loop
+	});
+
 	std::thread audioThread(runAudioThread);
 
-	while (app.isRunning())
-	{
-		simWorker.compute();
-		simWorker.waitForCompletion();
+    while (app.isRunning())
+    {
+        double currentTime = glfwGetTime();
+        if (currentTime - lastTime >= targetFrameTime)
+        {
+            std::cout << "Frame time: " << currentTime - lastTime << std::endl;
+            app.onFrame();
+            glfwPollEvents();
+            lastTime = currentTime;
+        }
+    }
+	isAudioThreadRunning = false;  // Set the flag to false to exit the audio thread loop
+    // Stop audio and simulation worker before joining threads.
+    // Add mechanisms in runAudioThread and simWorker.compute to break out of their loops when the app is not running.
+    audioThread.join();
+    simulationThread.join();
 
-		double currentTime = glfwGetTime();
-		if (currentTime - lastTime >= targetFrameTime)
-		{
-			app.onFrame();
-			glfwPollEvents();
-			lastTime = currentTime;
-		}
-	}
+    cleanupAudio();
+    app.onFinish();
 
-	audioThread.join();
-	cleanupAudio();
-
-	app.onFinish();
-	return 0;
+    return 0;
 }
 

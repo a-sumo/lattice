@@ -1,13 +1,15 @@
 #include "AudioInterface.h"
+#include "simulationworker.h"
+#include "BufferManager.h"
 #include <mutex>
 
 // Constants
 const unsigned int WIDTH = 256;
 const unsigned int HEIGHT = 256;
 
-// External references
-extern uint8_t **readState; // Used by audio_callback
-extern std::mutex bufferSwapMutex;
+extern SimulationWorker simWorker;  // Assuming simWorker is globally accessible 
+
+// Use the mutex from simWorker directly
 std::mutex *pBufferSwapMutex = nullptr;
 
 // Global or static variables to keep track of the state
@@ -21,9 +23,8 @@ int audio_callback(void *outputBuffer, [[maybe_unused]] void *inputBuffer, unsig
     uint8_t **current_state;
     {
         std::lock_guard<std::mutex> lock(*pBufferSwapMutex);
-        current_state = readState;
+        current_state = simWorker.getReadState();  // Use the simWorker to get the readState
     }
-
     // Get the average audio data from a small domain.
     float *buffer = (float *)outputBuffer;
     unsigned int domainSize = 10; // Example domain size
@@ -55,10 +56,9 @@ int audio_callback(void *outputBuffer, [[maybe_unused]] void *inputBuffer, unsig
     return 0;
 }
 
-void setupAudio(uint8_t **readBuffer, std::mutex *bufferMutexPtr)
-{
-    readState = readBuffer;
-    pBufferSwapMutex = bufferMutexPtr;
+void setupAudio() {
+    // Initialize pBufferSwapMutex during audio setup
+    pBufferSwapMutex = simWorker.getBufferSwapMutex();
 }
 
 void cleanupAudio()

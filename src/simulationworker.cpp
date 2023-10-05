@@ -1,63 +1,41 @@
 #include "simulationworker.h"
 #include <iostream>
 #include <cstring>
-SimulationWorker::SimulationWorker() : isDone(false)
+
+SimulationWorker::SimulationWorker() : bufferManager(WIDTH, HEIGHT), isDone(false)
 {
-    current_state = new uint8_t *[HEIGHT];
-    next_state = new uint8_t *[HEIGHT];
-    for (size_t i = 0; i < HEIGHT; i++)
+    uint8_t **currentState = bufferManager.getReadState();
+    for (size_t i = HEIGHT / 2 - 5; i < HEIGHT / 2 + 5; i++)
     {
-        current_state[i] = new uint8_t[WIDTH]();
-        next_state[i] = new uint8_t[WIDTH]();
-    }
-    // Set up initial conditions
-    for (int i = HEIGHT / 2 - 5; i < HEIGHT / 2 + 5; i++)
-    {
-        for (int j = WIDTH / 2 - 5; j < WIDTH / 2 + 5; j++)
+        for (size_t j = WIDTH / 2 - 5; j < WIDTH / 2 + 5; j++)
         {
-            current_state[i][j] = 255;
+            currentState[i][j] = 255;
         }
     }
-    readState = current_state;
-    writeState = next_state;
 }
 
 void SimulationWorker::compute()
 {
-    isDone = false;
-    workerThread = std::thread([this]()
-                               {
-        for (int step = 0; step < STEPS; step++) {
-            if (step % 100 == 0) {
-                std::cout << "Step: " << step << std::endl;
-            }
-#pragma omp parallel sections
-            {
-#pragma omp section
-                compute_next_state(current_state, next_state, WIDTH, HEIGHT);
+    uint8_t **current_state = bufferManager.getReadState();
+    uint8_t **next_state = bufferManager.getWriteState(); 
+    size_t step = 0;  // Initialize timestep
 
-#pragma omp section
-                apply_boundary_conditions(next_state, WIDTH, HEIGHT);
+    while (!shouldExit) {  // Check the flag to exit the loop
+        // Note: You might want to add an exit condition here based on some variable or flag.
+        
+        compute_next_state(current_state, next_state, WIDTH, HEIGHT);
+        apply_boundary_conditions(next_state, WIDTH, HEIGHT);
+        add_sustained_excitation(next_state, WIDTH, HEIGHT, step);
 
-#pragma omp section
-                add_sustained_excitation(next_state, WIDTH, HEIGHT, step);
-            }
-
-            // Copy the newly computed state to the writeState buffer
-            for (size_t i = 0; i < HEIGHT; i++) {
-                memcpy(writeState[i], next_state[i], WIDTH * sizeof(uint8_t));
-            }
-
-            // Swap buffers after computation
-            {
-                std::lock_guard<std::mutex> lock(bufferSwapMutex);
-                std::swap(readState, writeState);
-            }
+        // Copy the newly computed state to the writeState buffer
+        for (size_t i = 0; i < HEIGHT; i++) {
+            memcpy(next_state[i], current_state[i], WIDTH * sizeof(uint8_t));
         }
 
-        std::unique_lock<std::mutex> lock(cv_mutex);
-        isDone = true;
-        cv.notify_one(); });
+        // Swap buffers after computation
+        bufferManager.swapBuffers();
+        step++;  // Increment timestep
+    }
 }
 
 void SimulationWorker::waitForCompletion()
@@ -70,16 +48,23 @@ void SimulationWorker::waitForCompletion()
 
 uint8_t **SimulationWorker::getReadState() const
 {
-    return readState;
+    return bufferManager.getReadState();
+}
+
+uint8_t **SimulationWorker::getWriteState() const
+{
+    return bufferManager.getWriteState();
 }
 
 std::mutex *SimulationWorker::getBufferSwapMutex()
 {
-    return &bufferSwapMutex;
+    return bufferManager.getMutex();
 }
 
-SimulationWorker::~SimulationWorker() {
-    if (workerThread.joinable()) {
+SimulationWorker::~SimulationWorker()
+{
+    if (workerThread.joinable())
+    {
         workerThread.join();
     }
     // Cleanup code if any. For example:

@@ -48,8 +48,7 @@ set(OPENMP_INCLUDE_PATH "/opt/homebrew/opt/libomp/include")
 
 # Create executable
 add_executable(lattice 
-include/Application.h
-include/ResourceManager.h
+include/BufferManager.h
 ${SOURCES})
 
 # we add "." here to make sure that we can include "glm/glm.hpp" instead of "glm.hpp"

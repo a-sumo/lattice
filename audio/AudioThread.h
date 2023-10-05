@@ -2,5 +2,5 @@
 #define AUDIO_THREAD_H
 
 void runAudioThread();
-
+extern std::atomic<bool> isAudioThreadRunning; 
 #endif
