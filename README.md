@@ -7,7 +7,7 @@ Generating sound through simulations of real-world physics, especially the intri
 - AngeTheGreat's real-time demonstration of physics-based audio: [Real-time Trumpet Simulation [C++/Vulkan]](https://youtu.be/rGNUHigqUBM?t=119).
 - Doug James elaborating on the intricacies of physics-based sound generation: [Doug James: Computer-generated sound catches its graphical sibling](https://youtu.be/10zK-3SjTeY?t=479).
 
-To address these challenges, we need to revamp our approach. Beginning with an understanding of the capabilities of current hardware (CPUs and GPUs), it's imperative to discern the kind of physics simulations they can efficiently handle. This is where Cellular automata come into the picture. Defined on a grid and driven by simple, localized rules, they are known to produce intricate dynamics. Given their structure, they can be computed rapidly on contemporary hardware, which makes them a potential tool for simulating real-world physics. A notable example in this context is the [Lattice gas automaton](https://en.wikipedia.org/wiki/Lattice_gas_automaton).
+To address these challenges, we can beging with an understanding of the capabilities of current hardware (CPUs and GPUs), and identify the kind of physics simulations they can efficiently handle. This is where Cellular automata come into the picture. Defined on a grid and driven by simple, localized rules, they are known to produce intricate dynamics. Given their structure, they can be computed rapidly on contemporary hardware, which makes them a potential tool for simulating real-world physics. A notable example in this context is the [Lattice gas automaton](https://en.wikipedia.org/wiki/Lattice_gas_automaton).
 
 ## Technical Overview
 
